@@ -33,6 +33,15 @@ jobs:
           sudo sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
           sudo sed -i 's/#PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
           sudo sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
+
+          # Validasi konfigurasi SSH
+          sudo sshd -t
+          if [ $? -ne 0 ]; then
+            echo "SSHD configuration is invalid. Please check your changes." >&2
+            exit 1
+          fi
+
+          # Restart SSH jika valid
           sudo systemctl restart sshd
 
       - name: Set Root Password
