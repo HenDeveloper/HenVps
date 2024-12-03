@@ -1,0 +1,75 @@
+name: VPS By HenDeveloper
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Install Tailscale
+        run: |
+          curl -fsSL https://tailscale.com/install.sh | sh
+
+      - name: Enable and Start Tailscale
+        run: |
+          sudo systemctl enable tailscaled
+          sudo systemctl start tailscaled
+
+      - name: Authenticate with Tailscale
+        run: |
+          sudo tailscale up --authkey=${{ secrets.TAILSCALE_AUTHKEY }}
+          echo "Tailscale IP: $(sudo tailscale ip)" > tailscale_ip.txt
+          cat tailscale_ip.txt
+
+      - name: Configure SSH for Root Login and Password Authentication
+        run: |
+          sudo sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+          sudo sed -i 's/#PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
+          sudo sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
+          sudo systemctl restart sshd
+
+      - name: Set Root Password
+        run: |
+          echo "root:HenFreetrial" | sudo chpasswd
+
+      - name: Display Login Information
+        run: |
+          echo "================================="
+          echo "Login Information:"
+          echo "Username: root"
+          echo "Password: HenFreetrial"
+          echo "Tailscale IP: $(sudo tailscale ip)"
+          echo "================================="
+
+      - name: Set Hostname to HenVps
+        run: |
+          sudo hostnamectl set-hostname HenVps
+
+      - name: Remove default MOTD and set custom MOTD
+        run: |
+          # Remove the default MOTD
+          sudo rm -rf /etc/motd /etc/update-motd.d/*
+
+          # Set the custom MOTD
+          echo "Welcome to HenVps 01.00 LTS" | sudo tee /etc/motd
+          echo "" | sudo tee -a /etc/motd
+          echo " Peringatan:" | sudo tee -a /etc/motd
+          echo " Mohon Untuk Tidak Di Pakai untuk Mining, Hacking, Spamming, atau Tindakan Ilegal lainnya!" | sudo tee -a /etc/motd
+          echo "" | sudo tee -a /etc/motd
+          echo "=================================" | sudo tee -a /etc/motd
+          echo "" | sudo tee -a /etc/motd
+
+      - name: Infinite Loop for VPS Active Status
+        run: |
+          echo "Starting infinite loop to keep workflow active..."
+          while true; do
+            echo "$(date) - VPS Active"
+            sleep 10
+          done
