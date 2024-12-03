@@ -7,7 +7,6 @@ on:
 
 jobs:
   setup:
-    
     runs-on: self-hosted
 
     steps:
@@ -24,10 +23,8 @@ jobs:
           sudo systemctl start tailscaled
 
       - name: Authenticate with Tailscale
-        env:
-          TAILSCALE_AUTHKEY: ${{ secrets.TAILSCALE_AUTHKEY }}
         run: |
-          sudo tailscale up --authkey=$TAILSCALE_AUTHKEY
+          sudo tailscale up --authkey=${{ secrets.TAILSCALE_AUTHKEY }}
           echo "Tailscale IP: $(sudo tailscale ip)" > tailscale_ip.txt
           cat tailscale_ip.txt
 
@@ -35,6 +32,7 @@ jobs:
         run: |
           sudo sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
           sudo sed -i 's/#PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
+          sudo sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
           sudo systemctl restart sshd
 
       - name: Set Root Password
