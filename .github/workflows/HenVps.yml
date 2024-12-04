@@ -55,5 +55,5 @@ jobs:
           echo "Login Information:"
           echo "Username: root"
           echo "Password: HenFreetrial"
-          echo "Tailscale IP: $(sudo tailscale ip)"
+          echo "HenVps IP: $(sudo tailscale ip)"
           echo "================================="
