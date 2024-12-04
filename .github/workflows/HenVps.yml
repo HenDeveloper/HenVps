@@ -28,15 +28,20 @@ jobs:
           echo "Tailscale IP: $(sudo tailscale ip)" > tailscale_ip.txt
           cat tailscale_ip.txt
 
+      - name: Backup sshd_config
+        run: |
+          sudo cp /etc/ssh/sshd_config /etc/ssh/sshd_config.bak
+
       - name: Configure SSH for Root Login and Password Authentication
         run: |
-          sudo sed -i 's/^#PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config || echo 'PermitRootLogin yes' | sudo tee -a /etc/ssh/sshd_config
-          sudo sed -i 's/^#PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config || echo 'PasswordAuthentication yes' | sudo tee -a /etc/ssh/sshd_config
+          sudo sed -i '/^#*PermitRootLogin/s/^#*PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config
+          sudo sed -i '/^#*PasswordAuthentication/s/^#*PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config
           sudo sshd -t
           if [ $? -eq 0 ]; then
-            sudo systemctl restart sshd
+            echo "SSHD configuration valid. Attempting to restart..."
+            sudo /usr/sbin/sshd -D &
           else
-            echo "SSHD configuration error. Exiting."
+            echo "SSHD configuration invalid. Exiting."
             exit 1
           fi
 
