@@ -30,19 +30,15 @@ jobs:
 
       - name: Configure SSH for Root Login and Password Authentication
         run: |
-          sudo sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
-          sudo sed -i 's/#PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
-          sudo sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
-
-          # Validasi konfigurasi SSH
+          sudo sed -i 's/^#PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config || echo 'PermitRootLogin yes' | sudo tee -a /etc/ssh/sshd_config
+          sudo sed -i 's/^#PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config || echo 'PasswordAuthentication yes' | sudo tee -a /etc/ssh/sshd_config
           sudo sshd -t
-          if [ $? -ne 0 ]; then
-            echo "SSHD configuration is invalid. Please check your changes." >&2
+          if [ $? -eq 0 ]; then
+            sudo systemctl restart sshd
+          else
+            echo "SSHD configuration error. Exiting."
             exit 1
           fi
-
-          # Restart SSH jika valid
-          sudo systemctl restart sshd
 
       - name: Set Root Password
         run: |
@@ -56,29 +52,3 @@ jobs:
           echo "Password: HenFreetrial"
           echo "Tailscale IP: $(sudo tailscale ip)"
           echo "================================="
-
-      - name: Set Hostname to HenVps
-        run: |
-          sudo hostnamectl set-hostname HenVps
-
-      - name: Remove default MOTD and set custom MOTD
-        run: |
-          # Remove the default MOTD
-          sudo rm -rf /etc/motd /etc/update-motd.d/*
-
-          # Set the custom MOTD
-          echo "Welcome to HenVps 01.00 LTS" | sudo tee /etc/motd
-          echo "" | sudo tee -a /etc/motd
-          echo " Peringatan:" | sudo tee -a /etc/motd
-          echo " Mohon Untuk Tidak Di Pakai untuk Mining, Hacking, Spamming, atau Tindakan Ilegal lainnya!" | sudo tee -a /etc/motd
-          echo "" | sudo tee -a /etc/motd
-          echo "=================================" | sudo tee -a /etc/motd
-          echo "" | sudo tee -a /etc/motd
-
-      - name: Infinite Loop for VPS Active Status
-        run: |
-          echo "Starting infinite loop to keep workflow active..."
-          while true; do
-            echo "$(date) - VPS Active"
-            sleep 10
-          done
